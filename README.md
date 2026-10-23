@@ -55,6 +55,17 @@ npm start            # http://localhost:3000
 
 執行測試：`npm test`
 
+## 部署到 Render（最快，可直接用手機開啟）
+
+倉庫已附 `render.yaml`：
+1. 用 GitHub 帳號登入 https://render.com
+2. 點 **New → Blueprint**，選擇 `ibox` 倉庫
+3. 依提示輸入 `ADMIN_PASSWORD`（admin 的初始密碼），按 **Apply**
+4. 約 3–5 分鐘後會得到 `https://xxxx.onrender.com` 網址，用 `admin` 和剛才的密碼登入
+
+> 預設為**免費方案，僅供試用**：閒置 15 分鐘會休眠，且**重新部署或重啟後資料與照片會清空**。
+> 正式使用請依 `render.yaml` 檔頭說明改為 starter 方案並加上永久磁碟。
+
 ## 部署（Docker）
 
 ```bash

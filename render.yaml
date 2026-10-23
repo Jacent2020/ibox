@@ -1,0 +1,42 @@
+# Render 部署設定（Blueprint）
+# 在 Render 點 New → Blueprint 並選擇此倉庫，即會依此檔建立服務。
+#
+# 目前為免費方案，適合試用：
+#   - 閒置 15 分鐘會休眠，下次開啟需等約 1 分鐘喚醒
+#   - 沒有永久磁碟，服務重新啟動或重新部署後，資料與照片都會清空
+#
+# 正式使用時請改為付費方案並加上永久磁碟：
+#   1. 把 plan: free 改成 plan: starter
+#   2. 取消下方 disk 區塊的註解
+#   3. 把 DATA_DIR 改成 /var/data
+services:
+  - type: web
+    name: shenyi-construction-report
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: ./data
+      # 建立時 Render 會請您輸入 admin 的初始密碼（首次登入後仍會要求變更）
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # Render 前面有 HTTPS 代理，需信任代理並只透過 HTTPS 傳送登入 cookie
+      - key: TRUST_PROXY
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+    # disk:
+    #   name: data
+    #   mountPath: /var/data
+    #   sizeGB: 5
