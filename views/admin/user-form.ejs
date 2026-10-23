@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<div class="page-head"><h1><%= title %></h1></div>
+<form class="card narrow-wide" method="post" action="<%= isNew ? '/admin/users' : '/admin/users/' + u.id %>">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid-2">
+    <label>帳號 <span class="req">*</span>
+      <% if (isNew) { %>
+        <input name="username" value="<%= u.username || '' %>" pattern="[A-Za-z0-9._\-]{3,30}" autocapitalize="none" required>
+        <span class="small muted">3–30 個英數字，登入用，建立後不可修改</span>
+      <% } else { %>
+        <input value="<%= u.username %>" disabled>
+      <% } %>
+    </label>
+    <label>姓名 <span class="req">*</span><input name="display_name" value="<%= u.display_name || '' %>" maxlength="50" required></label>
+    <label>電話 <input name="phone" type="tel" value="<%= u.phone || '' %>" maxlength="50"></label>
+    <label>Email <input name="email" type="email" value="<%= u.email || '' %>" maxlength="100"></label>
+    <label><%= isNew ? '初始密碼' : '重設密碼（留空則不變更）' %> <% if (isNew) { %><span class="req">*</span><% } %>
+      <input name="password" type="text" minlength="8" autocomplete="new-password" <%= isNew ? 'required' : '' %>>
+      <span class="small muted">至少 8 字元；該人員下次登入時需自行變更</span>
+    </label>
+    <% if (!isNew) { %>
+    <label class="check standalone"><input type="checkbox" name="is_active" value="1" <%= u.is_active ? 'checked' : '' %>> 帳號啟用中（取消勾選即停用，無法登入）</label>
+    <% } %>
+  </div>
+  <fieldset>
+    <legend>角色（可複選） <span class="req">*</span></legend>
+    <div class="role-pick">
+      <% for (const r of roles) { %>
+        <label class="check role-option">
+          <input type="checkbox" name="roles" value="<%= r.id %>" <%= userRoles.includes(r.id) ? 'checked' : '' %>>
+          <span><strong><%= r.name %></strong><br><span class="small muted"><%= r.description %></span></span>
+        </label>
+      <% } %>
+    </div>
+  </fieldset>
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="/admin/users">取消</a>
+    <button class="btn btn-primary" type="submit">儲存</button>
+  </div>
+</form>
+<%- include('../partials/footer') %>

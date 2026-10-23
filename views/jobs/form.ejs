@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+<% const v = (k) => job[k] === null || job[k] === undefined ? '' : job[k]; %>
+<div class="page-head">
+  <h1><%= title %><% if (!isNew) { %> <span class="mono muted"><%= job.job_no %></span><% } %></h1>
+</div>
+
+<form class="job-form" method="post"
+      action="<%= isNew ? '/jobs?_csrf=' + csrf : '/jobs/' + job.id %>"
+      <% if (isNew) { %>enctype="multipart/form-data" data-upload-form<% } %>>
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+
+  <section class="card">
+    <h2>工作資訊</h2>
+    <div class="grid-2">
+      <label>工作類別 <span class="req">*</span>
+        <select name="category_id" required>
+          <option value="">請選擇</option>
+          <% for (const c of categories) { %>
+            <option value="<%= c.id %>" <%= Number(v('category_id')) === c.id ? 'selected' : '' %>><%= c.name %></option>
+          <% } %>
+          <% if (!isNew && !categories.some((c) => c.id === Number(v('category_id')))) { %>
+            <option value="<%= v('category_id') %>" selected><%= job.category_name || '（已停用類別）' %></option>
+          <% } %>
+        </select>
+      </label>
+      <label>進度狀態 <span class="req">*</span>
+        <select name="status">
+          <% for (const s of statuses) { %><option <%= v('status') === s ? 'selected' : '' %>><%= s %></option><% } %>
+        </select>
+      </label>
+    </div>
+    <label>工作名稱 <span class="req">*</span>
+      <input name="title" value="<%= v('title') %>" maxlength="100" placeholder="例：3F 機房網路線重新佈線" required>
+    </label>
+    <label>工作簡述 <span class="req">*</span>
+      <textarea name="description" rows="4" maxlength="2000" placeholder="施工內容、範圍、處理方式…" required><%= v('description') %></textarea>
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>施工地點與客戶</h2>
+    <label>施工地址 <span class="req">*</span>
+      <div class="input-row">
+        <input name="address" value="<%= v('address') %>" maxlength="200" placeholder="縣市、區、路段、門牌、樓層" required>
+        <button type="button" class="btn btn-ghost" data-geo>📍 定位</button>
+      </div>
+    </label>
+    <input type="hidden" name="latitude" value="<%= v('latitude') %>">
+    <input type="hidden" name="longitude" value="<%= v('longitude') %>">
+    <p class="small muted" data-geo-status><% if (v('latitude') !== '') { %>已記錄 GPS 座標：<%= v('latitude') %>, <%= v('longitude') %><% } %></p>
+    <div class="grid-3">
+      <label>客戶 / 業主 <input name="customer_name" value="<%= v('customer_name') %>" maxlength="100"></label>
+      <label>現場聯絡人 <input name="contact_name" value="<%= v('contact_name') %>" maxlength="50"></label>
+      <label>聯絡電話 <input name="contact_phone" type="tel" value="<%= v('contact_phone') %>" maxlength="50"></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>施工時間與人員</h2>
+    <div class="grid-3">
+      <label>施工日期 <span class="req">*</span> <input type="date" name="work_date" value="<%= v('work_date') %>" required></label>
+      <label>開始時間 <input type="time" name="start_time" value="<%= v('start_time') %>"></label>
+      <label>結束時間 <input type="time" name="end_time" value="<%= v('end_time') %>"></label>
+    </div>
+    <fieldset>
+      <legend>施工人員（可複選）</legend>
+      <div class="check-grid">
+        <% for (const u of users) { %>
+          <label class="check"><input type="checkbox" name="members" value="<%= u.id %>" <%= members.includes(u.id) ? 'checked' : '' %>> <%= u.display_name %></label>
+        <% } %>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="card">
+    <h2>施工紀錄</h2>
+    <label>使用材料 / 設備 <textarea name="materials" rows="3" maxlength="2000" placeholder="例：Cat6 網路線 120m、RJ45 頭 24 個"><%= v('materials') %></textarea></label>
+    <label>異常狀況 / 待辦事項 <textarea name="issues" rows="3" maxlength="2000" placeholder="現場遇到的問題、需追蹤或需主管協助的事項"><%= v('issues') %></textarea></label>
+    <label>備註 <textarea name="notes" rows="2" maxlength="2000"><%= v('notes') %></textarea></label>
+  </section>
+
+  <% if (isNew) { %>
+  <section class="card">
+    <h2>施工照片</h2>
+    <p class="small muted">可直接拍照或從相簿選取，每階段最多 20 張。照片會自動壓縮以加快上傳。之後也可在工作頁面補傳。</p>
+    <div class="photo-inputs">
+      <% for (const s of stages) { %>
+        <div class="photo-input">
+          <label class="photo-label">📷 <%= s.label %>
+            <input type="file" name="photos_<%= s.code %>" accept="image/*" multiple data-preview>
+          </label>
+          <div class="previews"></div>
+        </div>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="<%= isNew ? '/' : '/jobs/' + job.id %>">取消</a>
+    <button class="btn btn-primary btn-lg" type="submit" data-submit><%= isNew ? '送出回報' : '儲存變更' %></button>
+  </div>
+  <div class="progress" hidden data-progress><div class="progress-bar"></div><span></span></div>
+</form>
+<%- include('../partials/footer') %>

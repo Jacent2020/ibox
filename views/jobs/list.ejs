@@ -1,0 +1,85 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <h1><%= title %> <span class="muted small">共 <%= total %> 筆</span></h1>
+  <div class="actions">
+    <% if (can('jobs.export')) { %><a class="btn btn-ghost" href="/jobs/export.csv?<%= qs %>">⬇ 匯出 Excel (CSV)</a><% } %>
+    <% if (can('jobs.create')) { %><a class="btn btn-primary" href="/jobs/new">＋ 新增回報</a><% } %>
+  </div>
+</div>
+
+<details class="card filters" <%= (f.q || f.category || f.status || f.review || f.member || f.from || f.to) ? 'open' : '' %>>
+  <summary>🔍 查詢條件</summary>
+  <form method="get" action="/jobs">
+    <input type="hidden" name="scope" value="<%= f.scope %>">
+    <div class="grid-4">
+      <label>關鍵字 <input name="q" value="<%= f.q %>" placeholder="單號、名稱、地址、客戶…"></label>
+      <label>工作類別
+        <select name="category"><option value="">全部</option>
+          <% for (const c of categories) { %><option value="<%= c.id %>" <%= String(c.id) === f.category ? 'selected' : '' %>><%= c.name %></option><% } %>
+        </select>
+      </label>
+      <label>進度狀態
+        <select name="status"><option value="">全部</option>
+          <% for (const s of statuses) { %><option <%= s === f.status ? 'selected' : '' %>><%= s %></option><% } %>
+        </select>
+      </label>
+      <label>審核狀態
+        <select name="review"><option value="">全部</option>
+          <% for (const s of reviews) { %><option <%= s === f.review ? 'selected' : '' %>><%= s %></option><% } %>
+        </select>
+      </label>
+      <% if (f.scope === 'all') { %>
+      <label>人員（回報人或施工人員）
+        <select name="member"><option value="">全部</option>
+          <% for (const u of users) { %><option value="<%= u.id %>" <%= String(u.id) === f.member ? 'selected' : '' %>><%= u.display_name %></option><% } %>
+        </select>
+      </label>
+      <% } %>
+      <label>施工日期（起） <input type="date" name="from" value="<%= f.from %>"></label>
+      <label>施工日期（迄） <input type="date" name="to" value="<%= f.to %>"></label>
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="/jobs?scope=<%= f.scope %>">清除條件</a>
+      <button class="btn btn-primary" type="submit">查詢</button>
+    </div>
+  </form>
+</details>
+
+<% if (!jobs.length) { %>
+  <section class="card center muted">查無符合條件的工作。</section>
+<% } else { %>
+<div class="table-wrap">
+<table class="table responsive">
+  <thead>
+    <tr>
+      <th>工作單號</th><th>施工日期</th><th>類別</th><th>工作名稱 / 地址</th><th>人員</th><th>照片</th><th>狀態</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const j of jobs) { %>
+      <tr data-href="/jobs/<%= j.id %>">
+        <td data-label="單號"><a class="mono" href="/jobs/<%= j.id %>"><%= j.job_no %></a></td>
+        <td data-label="日期"><%= j.work_date %><% if (j.start_time) { %><div class="small muted"><%= j.start_time %><%= j.end_time ? '–' + j.end_time : '' %></div><% } %></td>
+        <td data-label="類別"><%= j.category_name %></td>
+        <td data-label="名稱"><a href="/jobs/<%= j.id %>"><strong><%= j.title %></strong></a><div class="small muted"><%= j.address %></div></td>
+        <td data-label="人員"><%= j.member_names || j.creator_name %></td>
+        <td data-label="照片"><%= j.photo_count %></td>
+        <td data-label="狀態">
+          <span class="badge badge-<%= badgeClass[j.status] %>"><%= j.status %></span>
+          <span class="badge badge-<%= badgeClass[j.review_status] %>"><%= j.review_status %></span>
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+</div>
+
+<% if (pages > 1) { %>
+<nav class="pager">
+  <% if (page > 1) { %><a class="btn btn-ghost" href="/jobs?<%= qs %>&page=<%= page - 1 %>">‹ 上一頁</a><% } %>
+  <span>第 <%= page %> / <%= pages %> 頁</span>
+  <% if (page < pages) { %><a class="btn btn-ghost" href="/jobs?<%= qs %>&page=<%= page + 1 %>">下一頁 ›</a><% } %>
+</nav>
+<% } %>
+<% } %>
+<%- include('../partials/footer') %>

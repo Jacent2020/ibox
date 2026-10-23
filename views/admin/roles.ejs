@@ -1,0 +1,36 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <h1>角色與權限</h1>
+  <a class="btn btn-primary" href="/admin/roles/new">＋ 新增角色</a>
+</div>
+<p class="muted">一個人員可同時擁有多個角色，權限為所有角色的聯集。點「編輯」可設定角色可使用的功能，以及將人員放入角色。</p>
+<div class="table-wrap">
+<table class="table perm-matrix">
+  <thead>
+    <tr>
+      <th>功能 \ 角色</th>
+      <% for (const r of list) { %>
+        <th class="center"><a href="/admin/roles/<%= r.id %>/edit"><%= r.name %></a><div class="small muted"><%= r.user_count %> 人</div></th>
+      <% } %>
+    </tr>
+  </thead>
+  <tbody>
+    <% for (const g of groups) { %>
+      <tr class="group-row"><th colspan="<%= list.length + 1 %>"><%= g.name %></th></tr>
+      <% for (const p of g.items) { %>
+        <tr>
+          <td><%= p.label %></td>
+          <% for (const r of list) { %><td class="center"><%= r.permissions.includes(p.code) ? '✔' : '' %></td><% } %>
+        </tr>
+      <% } %>
+    <% } %>
+    <tr>
+      <td></td>
+      <% for (const r of list) { %>
+        <td class="center"><a class="btn btn-sm btn-ghost" href="/admin/roles/<%= r.id %>/edit">編輯</a></td>
+      <% } %>
+    </tr>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f4e79">
+  <title><%= title ? title + '｜' : '' %><%= siteName %></title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark">莘</span>
+    <span class="brand-text"><%= siteName %></span>
+  </a>
+  <% if (user) { %>
+  <button class="nav-toggle" type="button" aria-label="選單" aria-expanded="false" data-nav-toggle>☰</button>
+  <nav class="nav" data-nav>
+    <a href="/" class="<%= path === '/' ? 'active' : '' %>">首頁</a>
+    <% if (can('jobs.create')) { %><a href="/jobs/new" class="<%= path === '/jobs/new' ? 'active' : '' %>">＋ 新增回報</a><% } %>
+    <% if (can('jobs.view_own')) { %><a href="/jobs" class="<%= path === '/jobs' && !(locals.f && f.scope === 'all') ? 'active' : '' %>">我的工作</a><% } %>
+    <% if (can('jobs.view_all')) { %><a href="/jobs?scope=all" class="<%= locals.f && f.scope === 'all' ? 'active' : '' %>">工作歷史查詢</a><% } %>
+    <% if (can('users.manage', 'roles.manage', 'categories.manage')) { %>
+      <span class="nav-sep"></span>
+      <% if (can('users.manage')) { %><a href="/admin/users" class="<%= path.startsWith('/admin/users') ? 'active' : '' %>">人員</a><% } %>
+      <% if (can('roles.manage')) { %><a href="/admin/roles" class="<%= path.startsWith('/admin/roles') ? 'active' : '' %>">角色權限</a><% } %>
+      <% if (can('categories.manage')) { %><a href="/admin/categories" class="<%= path.startsWith('/admin/categories') ? 'active' : '' %>">工作類別</a><% } %>
+    <% } %>
+    <span class="nav-sep"></span>
+    <span class="nav-user" title="<%= user.roles.join('、') %>"><%= user.display_name %></span>
+    <a href="/account/password">改密碼</a>
+    <form method="post" action="/logout" class="inline">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <button type="submit" class="link">登出</button>
+    </form>
+  </nav>
+  <% } %>
+</header>
+<main class="container">
+<% for (const m of flash) { %>
+  <div class="alert alert-<%= m.type %>"><%= m.text %></div>
+<% } %>

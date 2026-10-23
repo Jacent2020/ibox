@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+<div class="page-head"><h1>工作類別</h1></div>
+<form class="card inline-form" method="post" action="/admin/categories">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input name="name" maxlength="30" placeholder="新類別名稱" required>
+  <button class="btn btn-primary" type="submit">＋ 新增</button>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>名稱</th><th>排序</th><th>啟用</th><th>工作數</th><th></th></tr></thead>
+  <tbody>
+    <% for (const c of list) { %>
+      <tr class="<%= c.is_active ? '' : 'row-muted' %>">
+        <td colspan="3">
+          <form method="post" action="/admin/categories/<%= c.id %>" class="cat-row">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input name="name" value="<%= c.name %>" maxlength="30" required>
+            <input name="sort_order" type="number" value="<%= c.sort_order %>" class="w-num">
+            <label class="check"><input type="checkbox" name="is_active" value="1" <%= c.is_active ? 'checked' : '' %>> 啟用</label>
+            <button class="btn btn-sm btn-ghost" type="submit">儲存</button>
+          </form>
+        </td>
+        <td><%= c.job_count %></td>
+        <td>
+          <% if (!c.job_count) { %>
+          <form method="post" action="/admin/categories/<%= c.id %>/delete" class="inline" data-confirm="確定刪除類別「<%= c.name %>」？">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <button class="btn btn-sm btn-danger" type="submit">刪除</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+</div>
+<p class="muted small">已被工作使用的類別無法刪除，可取消「啟用」讓它不再出現在新增選單中，歷史資料仍保留。</p>
+<%- include('../partials/footer') %>

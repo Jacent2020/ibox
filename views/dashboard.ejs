@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+<div class="page-head">
+  <h1>您好，<%= user.display_name %></h1>
+  <% if (can('jobs.create')) { %><a class="btn btn-primary btn-lg" href="/jobs/new">＋ 新增工作回報</a><% } %>
+</div>
+
+<% if (stats) { %>
+<section class="stats">
+  <a class="stat" href="/jobs?scope=all&from=<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(new Date()) %>&to=<%= new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei' }).format(new Date()) %>">
+    <span class="stat-num"><%= stats.today || 0 %></span><span class="stat-label">今日施工</span></a>
+  <a class="stat" href="/jobs?scope=all&status=施工中"><span class="stat-num"><%= stats.in_progress || 0 %></span><span class="stat-label">施工中</span></a>
+  <a class="stat stat-warn" href="/jobs?scope=all&status=已完工&review=待審核"><span class="stat-num"><%= stats.pending_review || 0 %></span><span class="stat-label">完工待審核</span></a>
+  <a class="stat stat-danger" href="/jobs?scope=all&review=退回"><span class="stat-num"><%= stats.rejected || 0 %></span><span class="stat-label">退回待修正</span></a>
+  <a class="stat" href="/jobs?scope=all"><span class="stat-num"><%= stats.total || 0 %></span><span class="stat-label">全部工作</span></a>
+</section>
+<% } %>
+
+<% if (can('jobs.view_own', 'jobs.view_all')) { %>
+<section class="card">
+  <div class="card-head">
+    <h2>我最近的工作</h2>
+    <a href="/jobs">查看全部 →</a>
+  </div>
+  <% if (!recent.length) { %>
+    <p class="muted">目前沒有工作紀錄。</p>
+  <% } else { %>
+    <ul class="job-cards">
+      <% for (const j of recent) { %>
+        <li><a href="/jobs/<%= j.id %>">
+          <div class="job-card-top">
+            <span class="mono"><%= j.job_no %></span>
+            <span>
+              <span class="badge badge-<%= badgeClass[j.status] %>"><%= j.status %></span>
+              <span class="badge badge-<%= badgeClass[j.review_status] %>"><%= j.review_status %></span>
+            </span>
+          </div>
+          <strong><%= j.title %></strong>
+          <div class="muted small"><%= j.work_date %>・<%= j.category_name %>・<%= j.address %></div>
+        </a></li>
+      <% } %>
+    </ul>
+  <% } %>
+</section>
+<% } %>
+<%- include('partials/footer') %>

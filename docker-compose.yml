@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # 首次啟動時的 admin 密碼（登入後仍會要求變更）
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin1234}
+      # 若前面有 Nginx / Caddy 等反向代理並啟用 HTTPS，請改為 true
+      COOKIE_SECURE: "false"
+      TRUST_PROXY: "false"
+    volumes:
+      - ./data:/data

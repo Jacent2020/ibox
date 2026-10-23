@@ -1,0 +1,125 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <div>
+    <div class="mono muted"><%= job.job_no %>・<%= job.category_name %></div>
+    <h1><%= job.title %></h1>
+    <span class="badge badge-<%= badgeClass[job.status] %>"><%= job.status %></span>
+    <span class="badge badge-<%= badgeClass[job.review_status] %>"><%= job.review_status %></span>
+  </div>
+  <div class="actions">
+    <% if (editable) { %><a class="btn btn-primary" href="/jobs/<%= job.id %>/edit">✎ 編輯</a><% } %>
+    <a class="btn btn-ghost" href="javascript:window.print()">🖨 列印</a>
+  </div>
+</div>
+
+<% if (job.review_status === '退回' && job.review_comment) { %>
+  <div class="alert alert-error"><strong>主管退回意見：</strong><%= job.review_comment %></div>
+<% } else if (job.review_status === '已核可') { %>
+  <div class="alert alert-success">此工作已由 <%= job.reviewer_name %> 於 <%= formatDateTime(job.reviewed_at) %> 審核通過<%= job.review_comment ? '：' + job.review_comment.replace(/[。.]$/, '') : '' %>。</div>
+<% } %>
+
+<% if (editable) { %>
+<form class="card quick-status no-print" method="post" action="/jobs/<%= job.id %>/status">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <span>快速更新狀態：</span>
+  <% for (const s of statuses) { %>
+    <button class="btn btn-sm <%= s === job.status ? 'btn-primary' : 'btn-ghost' %>" name="status" value="<%= s %>" <%= s === job.status ? 'disabled' : '' %>><%= s %></button>
+  <% } %>
+</form>
+<% } %>
+
+<section class="card">
+  <h2>工作資訊</h2>
+  <dl class="info">
+    <dt>工作簡述</dt><dd class="pre"><%= job.description %></dd>
+    <dt>施工地址</dt>
+    <dd><%= job.address %>
+      <a class="small no-print" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent(job.latitude !== null ? job.latitude + ',' + job.longitude : job.address) %>">（開啟地圖）</a>
+      <% if (job.latitude !== null) { %><div class="small muted">GPS：<%= job.latitude %>, <%= job.longitude %></div><% } %>
+    </dd>
+    <dt>施工日期</dt><dd><%= job.work_date %> <%= job.start_time %><%= job.end_time ? ' – ' + job.end_time : '' %></dd>
+    <dt>客戶 / 業主</dt><dd><%= job.customer_name || '—' %></dd>
+    <dt>現場聯絡人</dt><dd><%= job.contact_name || '—' %><% if (job.contact_phone) { %>（<a href="tel:<%= job.contact_phone %>"><%= job.contact_phone %></a>）<% } %></dd>
+    <dt>施工人員</dt><dd><%= members.map((m) => m.display_name).join('、') || '—' %></dd>
+    <dt>回報人</dt><dd><%= job.creator_name %>・<%= formatDateTime(job.created_at) %></dd>
+    <dt>最後更新</dt><dd><%= formatDateTime(job.updated_at) %></dd>
+    <dt>使用材料 / 設備</dt><dd class="pre"><%= job.materials || '—' %></dd>
+    <dt>異常狀況 / 待辦</dt><dd class="pre <%= job.issues ? 'text-danger' : '' %>"><%= job.issues || '—' %></dd>
+    <dt>備註</dt><dd class="pre"><%= job.notes || '—' %></dd>
+  </dl>
+</section>
+
+<section class="card" id="photos">
+  <h2>施工照片</h2>
+  <% for (const s of photosByStage) { %>
+    <div class="stage">
+      <h3><%= s.label %> <span class="muted small">（<%= s.photos.length %> 張）</span></h3>
+      <% if (s.photos.length) { %>
+        <div class="gallery">
+          <% for (const p of s.photos) { %>
+            <figure>
+              <a href="/photos/<%= p.id %>" target="_blank" data-lightbox><img src="/photos/<%= p.id %>" alt="<%= s.label %>照片" loading="lazy"></a>
+              <figcaption class="small muted">
+                <%= p.uploader %>・<%= formatDateTime(p.created_at) %>
+                <span class="no-print">
+                  <a href="/photos/<%= p.id %>?download=1">下載</a>
+                  <% if (can('jobs.delete') || (editable && p.uploaded_by === user.id)) { %>
+                    <form method="post" action="/jobs/<%= job.id %>/photos/<%= p.id %>/delete" class="inline" data-confirm="確定刪除這張照片？">
+                      <input type="hidden" name="_csrf" value="<%= csrf %>">
+                      <button class="link text-danger" type="submit">刪除</button>
+                    </form>
+                  <% } %>
+                </span>
+              </figcaption>
+            </figure>
+          <% } %>
+        </div>
+      <% } else { %>
+        <p class="muted small">尚無照片</p>
+      <% } %>
+      <% if (editable) { %>
+        <form class="upload-inline no-print" method="post" action="/jobs/<%= job.id %>/photos?_csrf=<%= csrf %>" enctype="multipart/form-data" data-upload-form>
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <input type="hidden" name="stage" value="<%= s.code %>">
+          <label class="photo-label small">＋ 補傳<%= s.label %>照片
+            <input type="file" name="photos" accept="image/*" multiple required data-preview data-autosubmit>
+          </label>
+          <div class="previews"></div>
+          <div class="progress" hidden data-progress><div class="progress-bar"></div><span></span></div>
+        </form>
+      <% } %>
+    </div>
+  <% } %>
+</section>
+
+<% if (can('jobs.review')) { %>
+<section class="card no-print" id="review">
+  <h2>主管審核</h2>
+  <form method="post" action="/jobs/<%= job.id %>/review">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>審核意見 <textarea name="review_comment" rows="2" maxlength="1000" placeholder="退回時必填"><%= job.review_comment %></textarea></label>
+    <div class="form-actions">
+      <button class="btn btn-danger" name="review_status" value="退回">退回修正</button>
+      <button class="btn btn-ghost" name="review_status" value="待審核">改回待審核</button>
+      <button class="btn btn-success" name="review_status" value="已核可">✔ 審核通過</button>
+    </div>
+  </form>
+</section>
+<% } %>
+
+<section class="card">
+  <h2>異動紀錄</h2>
+  <ul class="timeline">
+    <% for (const l of logs) { %>
+      <li><span class="muted small"><%= formatDateTime(l.created_at) %></span> <strong><%= l.display_name || '—' %></strong> <%= l.action %><% if (l.detail) { %>：<span class="muted"><%= l.detail %></span><% } %></li>
+    <% } %>
+  </ul>
+</section>
+
+<% if (can('jobs.delete')) { %>
+<form class="no-print danger-zone" method="post" action="/jobs/<%= job.id %>/delete" data-confirm="確定要刪除工作 <%= job.job_no %> 及所有照片嗎？此動作無法復原。">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn btn-danger btn-sm" type="submit">刪除此工作</button>
+</form>
+<% } %>
+<%- include('../partials/footer') %>

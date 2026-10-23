@@ -1,0 +1,24 @@
+<%- include('../partials/header') %>
+<div class="page-head">
+  <h1>人員管理</h1>
+  <a class="btn btn-primary" href="/admin/users/new">＋ 新增人員</a>
+</div>
+<div class="table-wrap">
+<table class="table responsive">
+  <thead><tr><th>姓名</th><th>帳號</th><th>角色</th><th>電話</th><th>狀態</th><th>最後登入</th><th></th></tr></thead>
+  <tbody>
+    <% for (const u of list) { %>
+      <tr class="<%= u.is_active ? '' : 'row-muted' %>">
+        <td data-label="姓名"><strong><%= u.display_name %></strong></td>
+        <td data-label="帳號" class="mono"><%= u.username %></td>
+        <td data-label="角色"><%= u.role_names || '—' %></td>
+        <td data-label="電話"><%= u.phone || '—' %></td>
+        <td data-label="狀態"><span class="badge badge-<%= u.is_active ? 'green' : 'muted' %>"><%= u.is_active ? '啟用' : '停用' %></span></td>
+        <td data-label="最後登入"><%= formatDateTime(u.last_login_at) || '從未登入' %></td>
+        <td><a class="btn btn-sm btn-ghost" href="/admin/users/<%= u.id %>/edit">編輯</a></td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+</div>
+<%- include('../partials/footer') %>

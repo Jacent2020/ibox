@@ -1,0 +1,45 @@
+<%- include('../partials/header') %>
+<div class="page-head"><h1><%= title %></h1></div>
+<form class="card narrow-wide" method="post" action="<%= isNew ? '/admin/roles' : '/admin/roles/' + role.id %>">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid-2">
+    <label>角色名稱 <span class="req">*</span>
+      <input name="name" value="<%= role.name || '' %>" maxlength="30" <%= role.is_system ? 'disabled' : 'required' %>>
+    </label>
+    <label>說明 <input name="description" value="<%= role.description || '' %>" maxlength="200"></label>
+  </div>
+
+  <fieldset>
+    <legend>可使用的功能</legend>
+    <% if (role.is_system) { %><p class="alert alert-info">系統管理員固定擁有全部權限，無法修改。</p><% } %>
+    <% for (const g of groups) { %>
+      <h3 class="small"><%= g.name %></h3>
+      <div class="check-list">
+        <% for (const p of g.items) { %>
+          <label class="check"><input type="checkbox" name="permissions" value="<%= p.code %>" <%= rolePerms.includes(p.code) ? 'checked' : '' %> <%= role.is_system ? 'disabled' : '' %>> <%= p.label %></label>
+        <% } %>
+      </div>
+    <% } %>
+  </fieldset>
+
+  <fieldset>
+    <legend>角色成員（將人員放入此角色）</legend>
+    <div class="check-grid">
+      <% for (const u of users) { %>
+        <label class="check"><input type="checkbox" name="members" value="<%= u.id %>" <%= roleMembers.includes(u.id) ? 'checked' : '' %>> <%= u.display_name %> <span class="muted small">(<%= u.username %>)</span></label>
+      <% } %>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="/admin/roles">取消</a>
+    <button class="btn btn-primary" type="submit">儲存</button>
+  </div>
+</form>
+<% if (!isNew && !role.is_system) { %>
+<form class="danger-zone" method="post" action="/admin/roles/<%= role.id %>/delete" data-confirm="確定刪除角色「<%= role.name %>」？成員會失去此角色的權限。">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn btn-danger btn-sm" type="submit">刪除此角色</button>
+</form>
+<% } %>
+<%- include('../partials/footer') %>
