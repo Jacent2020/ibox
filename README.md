@@ -81,6 +81,7 @@ ADMIN_PASSWORD='請改成強密碼' docker compose up -d --build
 | `PORT` | 服務埠號 | `3000` |
 | `DATA_DIR` | 資料庫與照片存放位置 | `./data` |
 | `ADMIN_PASSWORD` | 首次啟動時 admin 的密碼 | `admin1234` |
+| `ADMIN_RESET_PASSWORD` | 忘記 admin 密碼時設定並重啟，admin 會被重設為此密碼（登入後須改密碼），救援完成後請移除 | 不設定 |
 | `SESSION_SECRET` | Session 簽章金鑰（未設定時自動產生並存於 data 目錄） | 自動 |
 | `COOKIE_SECURE` | 使用 HTTPS 時設為 `true` | `false` |
 | `TRUST_PROXY` | 在反向代理後方時設為 `true` 或代理 IP | 不設定 |

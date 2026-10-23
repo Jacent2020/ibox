@@ -19,7 +19,8 @@ module.exports = function authRoutes(db) {
 
   router.post('/login', (req, res, next) => {
     const username = str(req.body.username, 50);
-    const password = String(req.body.password || '');
+    // 手機複製貼上常夾帶前後空白，登入時一律去除（設定密碼時也不允許前後空白）
+    const password = String(req.body.password || '').trim();
     const key = `${req.ip}|${username.toLowerCase()}`;
     const record = fails.get(key);
     if (record && record.count >= MAX_FAILS && Date.now() - record.at < LOCK_MS) {
@@ -60,8 +61,9 @@ module.exports = function authRoutes(db) {
     const next1 = String(req.body.password || '');
     const next2 = String(req.body.password2 || '');
     let error = null;
-    if (!bcrypt.compareSync(current, row.password_hash)) error = '目前密碼不正確。';
+    if (!bcrypt.compareSync(current.trim(), row.password_hash)) error = '目前密碼不正確。';
     else if (next1.length < 8) error = '新密碼至少需 8 個字元。';
+    else if (next1 !== next1.trim()) error = '密碼開頭與結尾不可有空白。';
     else if (next1 !== next2) error = '兩次輸入的新密碼不一致。';
     else if (next1 === current) error = '新密碼不可與目前密碼相同。';
     if (error) {

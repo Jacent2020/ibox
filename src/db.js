@@ -162,7 +162,7 @@ function seed(db) {
 
   const userCount = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
   if (userCount === 0) {
-    const password = process.env.ADMIN_PASSWORD || 'admin1234';
+    const password = (process.env.ADMIN_PASSWORD || 'admin1234').trim();
     const { lastInsertRowid } = db
       .prepare('INSERT INTO users (username, display_name, password_hash, must_change_password) VALUES (?, ?, ?, 1)')
       .run('admin', '系統管理員', bcrypt.hashSync(password, 10));
@@ -170,6 +170,19 @@ function seed(db) {
     db.prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)').run(lastInsertRowid, adminRole.id);
     if (!process.env.ADMIN_PASSWORD) {
       console.log('已建立預設管理員帳號 admin / admin1234，首次登入後請立即變更密碼。');
+    }
+  }
+
+  // 忘記管理員密碼時的救援：設定 ADMIN_RESET_PASSWORD 後重啟，admin 會被重設並啟用，
+  // 登入後須改密碼。救援完成後請移除此環境變數。
+  if (process.env.ADMIN_RESET_PASSWORD) {
+    const admin = db.prepare("SELECT id FROM users WHERE username = 'admin'").get();
+    const sys = db.prepare('SELECT id FROM roles WHERE is_system = 1').get();
+    if (admin && sys) {
+      db.prepare('UPDATE users SET password_hash = ?, is_active = 1, must_change_password = 1 WHERE id = ?')
+        .run(bcrypt.hashSync(process.env.ADMIN_RESET_PASSWORD.trim(), 10), admin.id);
+      db.prepare('INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)').run(admin.id, sys.id);
+      console.log('已依 ADMIN_RESET_PASSWORD 重設 admin 密碼，救援完成後請移除此環境變數。');
     }
   }
 

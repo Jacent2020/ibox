@@ -67,7 +67,7 @@ let jobId;
 test('預設管理員登入後必須先改密碼', async () => {
   const bad = await admin.login('admin', 'wrong');
   assert.strictEqual(bad.status, 401);
-  const ok = await admin.login('admin', 'admin1234');
+  const ok = await admin.login('admin', ' admin1234 '); // 前後空白會被忽略
   assert.strictEqual(ok.status, 302);
   const home = await admin.req('/');
   assert.strictEqual(home.location, '/account/password');

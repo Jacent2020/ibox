@@ -71,7 +71,7 @@ module.exports = function adminRoutes(db) {
       email: str(req.body.email, 100),
       is_active: 1,
     };
-    const password = String(req.body.password || '');
+    const password = String(req.body.password || '').trim();
     const roleIds = validRoleIds(req.body.roles);
     const errors = [];
     if (!USERNAME_RE.test(u.username)) errors.push('帳號需為 3–30 個英數字（可含 . _ -）。');
@@ -115,7 +115,7 @@ module.exports = function adminRoutes(db) {
       email: str(req.body.email, 100),
       is_active: req.body.is_active ? 1 : 0,
     };
-    const password = String(req.body.password || '');
+    const password = String(req.body.password || '').trim();
     const roleIds = validRoleIds(req.body.roles);
     const errors = [];
     if (!u.display_name) errors.push('請填寫姓名。');
