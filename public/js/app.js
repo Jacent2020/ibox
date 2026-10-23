@@ -51,24 +51,64 @@
     });
   });
 
-  // 選取照片後顯示預覽
+  // 照片選取：可多次點選累加（手機拍一張、再拍一張…），每張可單獨移除
+  var MAX_PER_STAGE = 20;
+  function fileKey(f) { return f.name + '|' + f.size + '|' + f.lastModified; }
+
   document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
-    input.addEventListener('change', function () {
-      var box = input.closest('.photo-input, form').querySelector('.previews');
+    var label = input.closest('label');
+    var labelText = label ? label.firstChild.textContent.trim() : '';
+    var box = input.closest('.photo-input, form').querySelector('.previews');
+    var autosubmit = input.hasAttribute('data-autosubmit');
+    input._files = [];
+
+    function render() {
       if (box) {
         box.innerHTML = '';
-        Array.prototype.forEach.call(input.files, function (file) {
+        input._files.forEach(function (file, i) {
+          var item = document.createElement('div');
+          item.className = 'preview-item';
           var img = document.createElement('img');
           img.alt = file.name;
           img.src = URL.createObjectURL(file);
-          box.appendChild(img);
+          item.appendChild(img);
+          if (!autosubmit) {
+            var del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'preview-del';
+            del.setAttribute('aria-label', '移除這張');
+            del.textContent = '×';
+            del.addEventListener('click', function () {
+              input._files.splice(i, 1);
+              render();
+            });
+            item.appendChild(del);
+          }
+          box.appendChild(item);
         });
       }
-      var label = input.closest('label');
-      if (label && !label.dataset.text) label.dataset.text = label.firstChild.textContent;
-      if (label) label.firstChild.textContent = label.dataset.text.trim() + '（已選 ' + input.files.length + ' 張）';
-      if (input.hasAttribute('data-autosubmit') && input.files.length) {
-        input.form.requestSubmit ? input.form.requestSubmit() : input.form.submit();
+      if (label) {
+        var n = input._files.length;
+        label.firstChild.textContent = n ? labelText + '（已選 ' + n + ' 張，點此再加）' : labelText;
+      }
+    }
+
+    input.addEventListener('change', function () {
+      var seen = {};
+      input._files.forEach(function (f) { seen[fileKey(f)] = true; });
+      var over = false;
+      Array.prototype.forEach.call(input.files, function (f) {
+        if (seen[fileKey(f)]) return;
+        if (input._files.length >= MAX_PER_STAGE) { over = true; return; }
+        input._files.push(f);
+        seen[fileKey(f)] = true;
+      });
+      if (over) window.alert('每個階段最多 ' + MAX_PER_STAGE + ' 張照片。');
+      render();
+      if (autosubmit) {
+        if (input._files.length) input.form.requestSubmit ? input.form.requestSubmit() : input.form.submit();
+      } else {
+        input.value = ''; // 清空後才能再次選取（含同一張），已選的照片保留在 _files
       }
     });
   });
@@ -114,7 +154,7 @@
       Array.prototype.forEach.call(form.elements, function (el) {
         if (!el.name || el.disabled) return;
         if (el.type === 'file') {
-          Array.prototype.forEach.call(el.files, function (f) {
+          Array.prototype.forEach.call(el._files || el.files, function (f) {
             jobs.push(shrink(f).then(function (out) { return [el.name, out]; }));
           });
         } else if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) {

@@ -206,7 +206,14 @@ legend { font-weight: 700; padding: 0 .35rem; }
 .photo-label input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .upload-inline { margin-top: .6rem; max-width: 360px; }
 .previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: .35rem; margin-top: .4rem; }
-.previews img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; }
+.previews { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+.preview-item { position: relative; }
+.previews img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; }
+.preview-del {
+  position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; border-radius: 50%;
+  border: 2px solid #fff; background: var(--red); color: #fff; font-size: 1rem; line-height: 1;
+  cursor: pointer; display: grid; place-items: center; padding: 0;
+}
 .progress { position: relative; height: 26px; background: #e7ebef; border-radius: 6px; overflow: hidden; margin-top: .75rem; }
 .progress-bar { height: 100%; width: 0; background: var(--green); transition: width .2s; }
 .progress span { position: absolute; inset: 0; display: grid; place-items: center; font-size: .85rem; font-weight: 600; }
