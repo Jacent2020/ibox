@@ -83,6 +83,32 @@ test('沒有 CSRF token 的 POST 會被拒絕', async () => {
   assert.strictEqual(res.status, 403);
 });
 
+test('伺服器重啟後（session 遺失）仍可直接登入，不會出現表單已過期', async () => {
+  const fresh = browser();
+  const body = new URLSearchParams({ username: 'admin', password: 'Admin#2026', _csrf: 'stale-token-from-old-page' });
+  const r = await fresh.req('/login', { method: 'POST', body, headers: { 'content-type': 'application/x-www-form-urlencoded' } });
+  assert.strictEqual(r.status, 302);
+  assert.strictEqual(r.location, '/');
+  // 跨站送出的登入會被拒絕
+  const evil = await browser().req('/login', {
+    method: 'POST', body: new URLSearchParams({ username: 'admin', password: 'Admin#2026' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://evil.example' },
+  });
+  assert.strictEqual(evil.status, 403);
+});
+
+test('一般表單 token 逾時會帶提示回到原頁面', async () => {
+  const r = await admin.req('/admin/categories', {
+    method: 'POST', body: new URLSearchParams({ name: 'x', _csrf: 'old' }),
+    headers: { 'content-type': 'application/x-www-form-urlencoded', referer: base + '/admin/categories' },
+  });
+  assert.strictEqual(r.status, 303);
+  assert.strictEqual(r.location, '/admin/categories');
+  const page = await admin.req('/admin/categories');
+  assert.match(page.text, /已逾時/);
+  assert.strictEqual(page.headers.get('cache-control'), 'no-store');
+});
+
 test('管理者可自訂角色並把人放入角色', async () => {
   workerRoleId = db.prepare("SELECT id FROM roles WHERE name = '員工'").get().id;
   managerRoleId = db.prepare("SELECT id FROM roles WHERE name = '主管'").get().id;

@@ -56,15 +56,42 @@ function requirePerm(...codes) {
   };
 }
 
+// 登入、登出不需要既有 session，伺服器重啟或部署後 session 會消失，若要求 token
+// 會讓手機上停留過久的登入頁一直顯示「表單已過期」。改以 Origin 檢查防止跨站送出。
+const ORIGIN_ONLY = new Set(['/login', '/logout']);
+
+function sameOrigin(req, value) {
+  try {
+    return new URL(value).host === req.get('host');
+  } catch {
+    return false;
+  }
+}
+
 function csrf(req, res, next) {
   if (!req.session.csrf) req.session.csrf = crypto.randomBytes(24).toString('hex');
   res.locals.csrf = req.session.csrf;
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+
+  if (ORIGIN_ONLY.has(req.path)) {
+    const origin = req.get('origin');
+    if (origin && origin !== 'null' && !sameOrigin(req, origin)) {
+      return res.status(403).render('error', { title: '拒絕存取', message: '請從本站頁面登入。' });
+    }
+    return next();
+  }
+
   // multipart 表單在 multer 解析前讀不到 body，因此也接受 query 或 header 帶入
   const token = (req.body && req.body._csrf) || req.query._csrf || req.get('x-csrf-token');
   const expected = Buffer.from(req.session.csrf);
   const given = Buffer.from(String(token || ''));
   if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) {
+    // 一般表單：帶著提示回到原頁面（會取得新的 token），不讓使用者卡在錯誤頁
+    const referer = req.get('referer');
+    if (referer && sameOrigin(req, referer) && req.get('x-requested-with') !== 'XMLHttpRequest') {
+      req.flash('error', '頁面停留太久已逾時，請再操作一次。');
+      return res.redirect(303, new URL(referer).pathname + new URL(referer).search);
+    }
     return res.status(403).render('error', { title: '表單已過期', message: '請重新整理頁面後再送出一次。' });
   }
   next();

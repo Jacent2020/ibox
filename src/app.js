@@ -40,6 +40,8 @@ function createApp({ dataDir = process.env.DATA_DIR || path.join(__dirname, '..'
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('X-Frame-Options', 'DENY');
     res.set('Referrer-Policy', 'same-origin');
+    // 頁面內含一次性表單 token，不讓瀏覽器（尤其 Safari 返回鍵）顯示快取的舊頁面
+    res.set('Cache-Control', 'no-store');
     next();
   });
   app.use('/static', express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
