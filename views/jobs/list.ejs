@@ -59,9 +59,9 @@
     <% for (const j of jobs) { %>
       <tr data-href="/jobs/<%= j.id %>">
         <td data-label="單號"><a class="mono" href="/jobs/<%= j.id %>"><%= j.job_no %></a></td>
-        <td data-label="日期"><%= j.work_date %><% if (j.start_time) { %><div class="small muted"><%= j.start_time %><%= j.end_time ? '–' + j.end_time : '' %></div><% } %></td>
+        <td data-label="日期"><div><%= j.work_date %><% if (j.start_time) { %><div class="small muted"><%= j.start_time %><%= j.end_time ? '–' + j.end_time : '' %></div><% } %></div></td>
         <td data-label="類別"><%= j.category_name %></td>
-        <td data-label="名稱"><a href="/jobs/<%= j.id %>"><strong><%= j.title %></strong></a><div class="small muted"><%= j.address %></div></td>
+        <td data-label="名稱"><div><a href="/jobs/<%= j.id %>"><strong><%= j.title %></strong></a><div class="small muted"><%= j.address %></div></div></td>
         <td data-label="人員"><%= j.member_names || j.creator_name %></td>
         <td data-label="照片"><%= j.photo_count %></td>
         <td data-label="狀態">
